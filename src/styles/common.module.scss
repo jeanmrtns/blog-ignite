@@ -1,1 +1,60 @@
 // TODO
+.container {
+  width: 100vw;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.content {
+  img {
+    margin: 3rem 0 2rem;
+  }
+
+  .post {
+    margin-top: 3rem;
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--heading);
+    }
+
+    p {
+      font-size: 1.25rem;
+      color: var(--body);
+    }
+
+    .info {
+      display: flex;
+      font-size: 1rem;
+      color: var(--info);
+      margin-top: 1.25rem;
+
+      time, span {
+        display: flex;
+        align-items: center;
+
+        svg {
+          margin-right: 0.5rem;
+        }
+      }
+
+      time + span {
+        margin-left: 1.5rem;
+      }
+    }
+  }
+}
+
+.loadMore {
+  display: block;
+  margin-top: 4rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--highlight);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
