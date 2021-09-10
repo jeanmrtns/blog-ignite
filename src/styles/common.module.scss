@@ -53,6 +53,9 @@
   font-weight: bold;
   color: var(--highlight);
   text-decoration: none;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
 
   &:hover {
     text-decoration: underline;

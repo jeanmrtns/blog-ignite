@@ -13,15 +13,15 @@ import { RichText } from 'prismic-dom';
 import { format } from 'date-fns'
 import ptBR from 'date-fns/esm/locale/pt-BR/index.js';
 import { pt } from 'date-fns/locale';
+import { useState } from 'react';
 
 interface Post {
   uid?: string;
   first_publication_date: string | null;
-  data: {
-    title: string;
-    subtitle: string;
-    author: string;
-  };
+  title: string;
+  subtitle: string;
+  author: string;
+  publicationDate: Date
 }
 
 interface PostPagination {
@@ -33,16 +33,35 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home({ posts }) {
+export default function Home({ posts, pagination }) {
 
-  console.log(posts)
+  const [ pagePosts, setPagePosts ] = useState<Post[]>(posts)
+
+  async function handleLoadPosts() {
+    fetch("https://ignitespacetravelling.cdn.prismic.io/api/v2/documents/search?ref=YTvN1BMAACoA5Wi3&q=%5B%5Bat%28document.type%2C+%22posts%22%29%5D%5D&page=2&pageSize=1&fetch=posts.title%2Cposts.subtitle%2Cposts.author%2Cposts.banner%2Cposts.content")
+    .then(result => result.json())
+    .then(data => {
+      const object = data.results
+      const posts : Post[] = object.map(obj => {
+        return {
+          ...obj.data,
+          uid: obj.uid,
+          publicationDate: format(new Date(obj.first_publication_date), "d MMM yyyy", {
+            locale: pt
+          })
+        }
+      })
+
+      setPagePosts([...pagePosts, ...posts])
+    })
+  }
   // TODO
   return (
       <div className={commonStyles.container}>
         <main className={commonStyles.content}>
           <img src="/logo.svg" alt="logo" />
             {
-              posts.map(post => (
+              pagePosts.map(post => (
                 <div key={post.uid} className={commonStyles.post}>
                   <h1>{post.title}</h1>
                   <p>{post.subtitle}</p>
@@ -54,7 +73,7 @@ export default function Home({ posts }) {
               ))
             }
 
-            <a href="#" className={commonStyles.loadMore}>Carregar mais posts</a>
+            <button onClick={handleLoadPosts} className={commonStyles.loadMore}>Carregar mais posts</button>
         </main>
       </div>
 
@@ -67,7 +86,7 @@ export const getStaticProps : GetStaticProps = async () => {
     Prismic.predicates.at('document.type', 'posts'),
   ], {
     fetch: ['posts.title', 'posts.subtitle', 'posts.author', 'posts.banner', 'posts.content'],
-    pageSize: 20
+    pageSize: 1
   })
 
   const posts = response.results.map(post => {
