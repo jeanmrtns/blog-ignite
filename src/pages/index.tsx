@@ -8,54 +8,64 @@ import { FiCalendar, FiUser } from 'react-icons/fi'
 
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
-import { RichText } from 'prismic-dom';
 
 import { format } from 'date-fns'
-import ptBR from 'date-fns/esm/locale/pt-BR/index.js';
 import { pt } from 'date-fns/locale';
 import { useState } from 'react';
 
-interface Post {
-  uid?: string;
-  first_publication_date: string | null;
-  title: string;
-  subtitle: string;
-  author: string;
+interface Posts {
+  uid: string,
+  title: string,
+  subtitle: string,
+  author: string,
+  banner: {},
+  content: {},
   publicationDate: Date
 }
-
-interface PostPagination {
-  next_page: string;
-  results: Post[];
-}
-
 interface HomeProps {
-  postsPagination: PostPagination;
+  posts: Posts[];
+  prevPage: string;
+  nextPage: string;
 }
 
-export default function Home({ posts, pagination }) {
 
-  const [ pagePosts, setPagePosts ] = useState<Post[]>(posts)
+export default function Home({ posts, nextPage, prevPage } : HomeProps) {
 
-  async function handleLoadPosts() {
-    fetch("https://ignitespacetravelling.cdn.prismic.io/api/v2/documents/search?ref=YTvN1BMAACoA5Wi3&q=%5B%5Bat%28document.type%2C+%22posts%22%29%5D%5D&page=2&pageSize=1&fetch=posts.title%2Cposts.subtitle%2Cposts.author%2Cposts.banner%2Cposts.content")
-    .then(result => result.json())
-    .then(data => {
-      const object = data.results
-      const posts : Post[] = object.map(obj => {
+  const [ pagePosts, setPagePosts ] = useState<Posts[]>(posts)
+  const [ pagination, setpagination ] = useState({nextPage, prevPage})
+
+  async function handleLoadPosts(nextPage) {
+
+    if(pagination.nextPage) {
+      const response = await fetch(nextPage)
+      const data = await response.json()
+      const newPosts = data.results
+
+      const pagination = {
+        nextPage: data.next_page,
+        prevPage: data.prev_page
+      }
+      setpagination(pagination)
+
+      const postsFormatted = newPosts.map(post => {
         return {
-          ...obj.data,
-          uid: obj.uid,
-          publicationDate: format(new Date(obj.first_publication_date), "d MMM yyyy", {
+          uid: post.uid,
+          title: post.data.title,
+          subtitle: post.data.subtitle,
+          author: post.data.author,
+          banner: post.data.banner,
+          content: post.data.content,
+          publicationDate: format(new Date(post.first_publication_date), "d MMM yyyy", {
             locale: pt
-          })
+          }),
         }
       })
 
-      setPagePosts([...pagePosts, ...posts])
-    })
+      setPagePosts([...pagePosts, ...postsFormatted])
+    }
+
   }
-  // TODO
+
   return (
       <div className={commonStyles.container}>
         <main className={commonStyles.content}>
@@ -73,7 +83,7 @@ export default function Home({ posts, pagination }) {
               ))
             }
 
-            <button onClick={handleLoadPosts} className={commonStyles.loadMore}>Carregar mais posts</button>
+            <button onClick={() => handleLoadPosts(pagination.nextPage)} className={commonStyles.loadMore}>Carregar mais posts</button>
         </main>
       </div>
 
@@ -106,10 +116,8 @@ export const getStaticProps : GetStaticProps = async () => {
   return {
     props: {
       posts,
-      pagination: {
-        nextPage: response.next_page,
-        prevPage: response.prev_page
-      }
+      nextPage: response.next_page,
+      prevPage: response.prev_page
     }
   }
 };
